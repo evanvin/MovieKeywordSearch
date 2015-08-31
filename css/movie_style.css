@@ -15,12 +15,17 @@
 }
 
 #loadingDiv {
-    background: url("ajax-loader.gif") no-repeat scroll center center #FFF;
-    position: absolute;
-	bottom: 0px;
-	right: 0px;
-    height: 100px;
-    width: 100px;
+    position: fixed;
+	top: 50%;
+	left: 50%;
+	margin-left: -74px;	/*half the images width */
+	margin-top: -74px;	/* half the images height */
+	text-align: center;
+	z-index: 1234;
+	overflow: auto;
+	width: 148px;
+	height: 148px;
+	border-radius: 10px;
 }
 
 #resultBody{text-align:center;}
@@ -59,4 +64,39 @@
 
 .panel-transparent {
 	background: rgba(255, 255, 255, 0.65)!important;
+}
+
+
+.slider-handle.custom {
+background: transparent none;
+box-shadow: none;
+
+/* You can customize the handle and set a background image */
+}
+
+/* Or display content like unicode characters or fontawesome icons */
+.slider-handle.custom::before {
+line-height: 20px;
+font-size: 40px;
+content: '\2605'; /*unicode star character*/
+color: #FFD700;
+}
+
+
+.back-to-top {
+    position: fixed;
+    bottom: 2em;
+    right: 0px;
+    text-decoration: none;
+    color: #000000;
+    background-color: rgba(235, 235, 235, 0.80);
+    font-size: 12px;
+    padding: 1em;
+    display: none;
+	cursor: pointer;
+}
+
+.back-to-top:hover {    
+    background-color: rgba(135, 135, 135, 0.50);
+	
 }

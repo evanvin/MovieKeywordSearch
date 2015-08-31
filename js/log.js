@@ -1,282 +1,189 @@
 var pageNumber = 1;
 var $loading = $('#loadingDiv').hide();
-$(document)
-  .ajaxStart(function () {
+$(document).ajaxStart(function() {
     $loading.show();
-  })
-  .ajaxStop(function () {
+}).ajaxStop(function() {
     $loading.hide();
-  })
-  .ajaxComplete(function () {
+}).ajaxComplete(function() {
     $loading.hide();
-  });
+});
 
-$(document).ready(function(){
-	
-//	searchMovies();
-
+$('#sortBySelect').change(function() {
+    searchMovies();
+});
+$('#orderBySelect').change(function() {
+    searchMovies();
 });
 
 
+$(document).ready(function() {
+	$('#keywordTags').tagsinput('focus');
+		
+        $('#genreSelect').multiselect({
+			maxHeight: 150,
+			buttonWidth: '100%'
+		});
+		
+		
+		$('#movieTVSelect').multiselect({
+			maxHeight: 150,
+			buttonWidth: '100%',
+			  onChange: function(option, checked) {
+				   var values = [];
+                    $('#movieTVSelect option').each(function() {
+                        if ($(this).val() !== option.val()) {
+                            values.push($(this).val());
+                        }
+                    });
+ 
+                    $('#movieTVSelect').multiselect('deselect', values);
+            }
+		});
+		
+		$("#ratingSlider").slider({});
+		
+		
+		
+		//back to top functionality
+		 var offset = 220;
+		var duration = 500;
+		jQuery(window).scroll(function() {
+			if (jQuery(this).scrollTop() > offset) {
+				jQuery('.back-to-top').fadeIn(duration);
+			} else {
+				jQuery('.back-to-top').fadeOut(duration);
+			}
+		});
+		
+		jQuery('.back-to-top').click(function(event) {
+			event.preventDefault();
+			jQuery('html, body').animate({scrollTop: 0}, duration);
+			return false;
+		})
+});
 
+function searchMovies() {
+    pageNumber = 1;
+    $('#resultBody').empty();
+    showSearchResults();
+}
 
-function searchMovies(){
-	
+function loadMore() {
+    $('#loadMoreId').remove();
+    showSearchResults();
+}
+
+function showSearchResults(){
+	if ($("#keywordTags").tagsinput('items') == null || $("#keywordTags").tagsinput('items').length <= 0) {
+        $("#keywordTags").closest(".form-group").find(".bootstrap-tagsinput").css('border-color', '#a94442');
+        return;
+    } else {
+        $("#keywordTags").closest(".form-group").find(".bootstrap-tagsinput").css('border-color', '#ccc');
+        var urlStart = "http://www.imdb.com/search/keyword?";
+        var urlModeSort = "&mode=detail&page=" + pageNumber + "&sort=" + $('#sortBySelect').val() + "," + $(
+            '#orderBySelect').val();
+        var urlKeywords = "";
+        var urlEnd = "";
+        var ref = "";
+        if ($("#keywordTags").tagsinput('items') != null && $("#keywordTags").tagsinput('items').length > 0) {
+            var arr = [];
+            $.each($("#keywordTags").tagsinput('items'), function(i, val) {
+                val = val.toLowerCase();
+                val = val.replace(" ", "-");
+                arr.push(val);
+            });
+            ref = "ref_=kw_ref_key";
+            urlKeywords += "keywords=" + arr.join("%2C");
+        }
+        if ($('#genreSelect').val() != null && $('#genreSelect').val().length > 0) {
+            ref = "ref_=kw_ref_gnr";
+            urlEnd += "&genres=" + $('#genreSelect').val().join("%2C");
+        }
+        if ($('#movieTVSelect').val() != null && $('#movieTVSelect').val().length > 0) {
+            ref = "ref_=kw_ref_typ";
+            urlEnd += "&title_type=" + $('#movieTVSelect').val().join();
+        }
+        if ($('#ratingSlider').val() != null && $('#ratingSlider').val() != "") {
+            ref = "ref_=kw_ref_rt_usr";
+            urlEnd += "&user_rating=" + $('#ratingSlider').val().replace(",", "%2C");
+        }
+        if ($("#keywordTags").tagsinput('items') != null && $("#keywordTags").tagsinput('items').length > 0) {
+            ref = "&" + ref;
+        }
+        var url = urlStart + urlKeywords + ref + urlModeSort + urlEnd;
+        $.ajaxPrefilter(function(options) {
+            if (options.crossDomain && jQuery.support.cors) {
+                var http = (window.location.protocol === 'http:' ? 'http:' : 'https:');
+                options.url = http + '//cors-anywhere.herokuapp.com/' + options.url;
+                //options.url = "http://cors.corsproxy.io/url=" + options.url;
+            }
+        });
+        $.ajax({
+            url: url,
+            success: function(data) {
+                //	console.log(url);
+				var myRegexp = /of (.*?) titles/g;
+				var numResults = myRegexp.exec(data);
+				
+				data = data.replace(/(?:\r\n|\r|\n)/g, '');
+                var $jQueryObject = $($.parseHTML(data));
+                var movies = [];
+                $.each($jQueryObject.find(".lister-item.mode-detail"), function(index, value) {
+                    var v = $(value);
+                    var result = {
+                        "title": v.find('.lister-item-content .lister-item-header a').html(),
+                        "movieID": v.find('.lister-item-image').attr('data-tconst'),
+                        "image": v.find('.lister-item-image img').attr('loadlate'),
+                        "year": v.find(
+                            '.lister-item-content .lister-item-header .lister-item-year'
+                        ).html().replace('(', "").replace(')', ""),
+                        "certificate": v.find('.lister-item-content .certificate').html(),
+                        "runtime": v.find('.lister-item-content .runtime').html(),
+                        "genre": v.find('.lister-item-content .genre').html(),
+                        "synopsis": v.find('.lister-item-content .ratings-bar').next('p').html()
+                    };
+                    movies.push(result);
+                });
+                
+				
+				if (movies == null || movies <= 0) {
+					$('#resultBody').append("<span>NO RESULTS</span>");
+					$('#numberOfResults').html('<span>0 results</span><br>');
+				} else {					
+					$.each(movies, function(index, value) {
+						if(movies.length <= 50 && numResults == null)
+							$('#numberOfResults').html('<span>' + movies.length + ' results</span><br>');
+						else
+							$('#numberOfResults').html('<span>' + numResults[1] + ' results</span><br>');
+						
+						if(value.synopsis.indexOf("<a href") > 0){
+							value.synopsis = value.synopsis.substring(0,value.synopsis.indexOf("<a href"));
+						}
+						var descrip = value.title + ' - ' + value.year + '&#13;' + value.genre + '&#13;' + value.runtime + ' - ' + value.certificate + '&#13;' + value.actualSynopsis;
+						$('#resultBody').append(
+							'<span class="grid-block" id="GridBlockID"><span class="movieblock" id="' + value.title + '"><a target="_blank" href="http://www.imdb.com/title/' +
+							value.movieID + '/?ref_=kw_li_tt"><img src="' + value.image +
+							'" title="' + descrip +
+							'"/></a></span><br><div style="height:75px; width: 140px !important; overflow:hidden;">' +
+							value.title + '</div></span>');
+					});
+					pageNumber++;
+					$('#resultBody').append(
+						'<span id="loadMoreId" onclick="loadMore();">Load More</span>');
+				}
+				
+            }
+        });
+    }
+}
+
+function clearForm(){
 	pageNumber = 1;
-	
-	$('#resultBody').empty();
-	
-	if($("#keywordTags").tagsinput('items') == null || $("#keywordTags").tagsinput('items').length <= 0){
-		$("#keywordTags").closest(".form-group").find(".bootstrap-tagsinput").css('border-color', '#a94442');
-		return;
-	}
-	else{
-		$("#keywordTags").closest(".form-group").find(".bootstrap-tagsinput").css('border-color', '#ccc');
-	
-	
-	
-	
-		var urlStart = "http://www.imdb.com/search/keyword?";
-		var urlModeSort = "&mode=detail&page=" + pageNumber + "&sort=" + $('#sortBySelect').val() + "," + $('#orderBySelect').val();
-		var urlKeywords = "";
-		var urlEnd = "";
-		var ref = "";
-		
-		if($("#keywordTags").tagsinput('items') != null && $("#keywordTags").tagsinput('items').length > 0){
-			var arr = [];
-			
-			$.each($("#keywordTags").tagsinput('items') , function( i, val ) {
-				val = val.toLowerCase();
-				val = val.replace(" ", "-");
-				arr.push(val);			
-			});
-			ref = "ref_=kw_ref_key";
-			urlKeywords += "keywords=" + arr.join("%2C");
-		}
-		
-		if($('#genreSelect').val() != null && $('#genreSelect').val().length > 0){
-			ref = "ref_=kw_ref_gnr";
-			urlEnd += "&genres=" + $('#genreSelect').val().join("%2C");
-		}
-		
-		if($('#movieTVSelect').val() != null && $('#movieTVSelect').val().length > 0){
-			ref = "ref_=kw_ref_typ";
-			urlEnd += "&title_type=" + $('#movieTVSelect').val().join();
-		}
-		
-		if($('#ratingSlider').val() != null && $('#ratingSlider').val() != ""){
-			ref = "ref_=kw_ref_rt_usr";
-			urlEnd += "&user_rating=" + $('#ratingSlider').val().replace(",","%2C");
-		}
-		
-		
-		
-		
-		if($("#keywordTags").tagsinput('items') != null && $("#keywordTags").tagsinput('items').length > 0){
-			ref = "&" + ref;	
-		}
-		
-		
-		
-		var url = urlStart + urlKeywords + ref + urlModeSort + urlEnd;
-		
-		
-		$.ajaxPrefilter( function (options) {
-		  if (options.crossDomain && jQuery.support.cors) {
-			var http = (window.location.protocol === 'http:' ? 'http:' : 'https:');
-			options.url = http + '//cors-anywhere.herokuapp.com/' + options.url;
-			//options.url = "http://cors.corsproxy.io/url=" + options.url;
-		  }
-		});
-		
-		
-		$.ajax({ url: url, success: function(data) {
-		//	console.log(url);
-			data = data.replace(/(?:\r\n|\r|\n)/g, '');
-			
-			var movieIdRegex = /ribbonize["] data-tconst=["](.*?)["]/g;
-			var movieIds = getMatches(data,movieIdRegex,1);
-			
-			
-			
-			
-			var titleRegex = /kw_li_tt[."]>(.*?)</g;
-			var matches = getMatches(data, titleRegex, 1);
-			//console.log(matches.length + ' matches found: ' + JSON.stringify(matches));
-			//console.log(matches);
-			
-			if(matches == null || matches <= 0){
-				$('#resultBody').append("<span>NO RESULTS</span>");
-			}
-			else{
-				var imageRegex = /kw_li_i[."]> (.*?)<[/]/g
-				var imageMatches = getMatches(data, imageRegex, 1);
-				//console.log(imageMatches);
-				
-				var linkReg = /loadlate=["](.*?)["]/g;
-				var links = getMatches(data, linkReg, 1);
-								
-				$.each( imageMatches, function( index, value ){
-					value = value.replace(/src=["](.*?)["]/g, ' src="' + links[index] + '" ');
-					value = value.replace(/(<[^>]*)loadlate\s*=\s*('|")[^\2]*?\2([^>]*>)/g, "$1$3");
-					value = value.replace(/class=["](.*?)["]/g, ' class="resultImage" title="' + matches[index] + '"');
-					
-					$('#resultBody').append('<span class="grid-block" id="GridBlockID"><span><a target="_blank" href="http://www.imdb.com/title/' + movieIds[index] + '/?ref_=kw_li_tt">' + value + '</a></span><br><div style="height:75px; width: 140px !important; overflow:hidden;">' + matches[index] + '</div></span>');
-					
-				});
-				
-				pageNumber++;
-				$('#resultBody').append('<span id="loadMoreId" onclick="loadMore();">Load More</span>');
-			}
-			
-					
-			
-
-					
-			} 
-		});
-	}
-	
-	
-	
-	
-	
-	
-}
-
-$('#sortBySelect').change(function(){ searchMovies();})
-$('#orderBySelect').change(function(){ searchMovies();})
-
-function getMatches(string, regex, index) {
-  index || (index = 1); // default to the first capturing group
-  var matches = [];
-  var match;
-  while (match = regex.exec(string)) {
-    matches.push(match[index]);
-  }
-  return matches;
-}
-
-
-
-
-
-
-
-
-function loadMore(){
-	
-	$('#loadMoreId').remove();
-	
-	if($("#keywordTags").tagsinput('items') == null || $("#keywordTags").tagsinput('items').length <= 0){
-		$("#keywordTags").closest(".form-group").find(".bootstrap-tagsinput").css('border-color', '#a94442');
-		return;
-	}
-	else{
-		$("#keywordTags").closest(".form-group").find(".bootstrap-tagsinput").css('border-color', '#ccc');
-	
-	
-	
-	
-		var urlStart = "http://www.imdb.com/search/keyword?";
-		var urlModeSort = "&mode=detail&page=" + pageNumber + "&sort=" + $('#sortBySelect').val() + "," + $('#orderBySelect').val();
-		var urlKeywords = "";
-		var urlEnd = "";
-		var ref = "";
-		
-		if($("#keywordTags").tagsinput('items') != null && $("#keywordTags").tagsinput('items').length > 0){
-			var arr = [];
-			
-			$.each($("#keywordTags").tagsinput('items') , function( i, val ) {
-				val = val.toLowerCase();
-				val = val.replace(" ", "-");
-				arr.push(val);			
-			});
-			ref = "ref_=kw_ref_key";
-			urlKeywords += "keywords=" + arr.join("%2C");
-		}
-		
-		if($('#genreSelect').val() != null && $('#genreSelect').val().length > 0){
-			ref = "ref_=kw_ref_gnr";
-			urlEnd += "&genres=" + $('#genreSelect').val().join("%2C");
-		}
-		
-		if($('#movieTVSelect').val() != null && $('#movieTVSelect').val().length > 0){
-			ref = "ref_=kw_ref_typ";
-			urlEnd += "&title_type=" + $('#movieTVSelect').val().join();
-		}
-		
-		if($('#ratingSlider').val() != null && $('#ratingSlider').val() != ""){
-			ref = "ref_=kw_ref_rt_usr";
-			urlEnd += "&user_rating=" + $('#ratingSlider').val().replace(",","%2C");
-		}
-		
-		
-		
-		
-		if($("#keywordTags").tagsinput('items') != null && $("#keywordTags").tagsinput('items').length > 0){
-			ref = "&" + ref;	
-		}
-		
-		
-		
-		var url = urlStart + urlKeywords + ref + urlModeSort + urlEnd;
-		
-		
-		$.ajaxPrefilter( function (options) {
-		  if (options.crossDomain && jQuery.support.cors) {
-			var http = (window.location.protocol === 'http:' ? 'http:' : 'https:');
-			options.url = http + '//cors-anywhere.herokuapp.com/' + options.url;
-			//options.url = "http://cors.corsproxy.io/url=" + options.url;
-		  }
-		});
-		
-		
-		$.ajax({ url: url, success: function(data) {
-		//	console.log(url);
-			data = data.replace(/(?:\r\n|\r|\n)/g, '');
-			
-			var movieIdRegex = /ribbonize["] data-tconst=["](.*?)["]/g;
-			var movieIds = getMatches(data,movieIdRegex,1);
-			
-			
-			
-			
-			var titleRegex = /kw_li_tt[."]>(.*?)</g;
-			var matches = getMatches(data, titleRegex, 1);
-			//console.log(matches.length + ' matches found: ' + JSON.stringify(matches));
-			//console.log(matches);
-			
-			if(matches == null || matches <= 0){
-				$('#resultBody').append("<span>NO RESULTS</span>");
-			}
-			else{
-				var imageRegex = /kw_li_i[."]> (.*?)<[/]/g
-				var imageMatches = getMatches(data, imageRegex, 1);
-				//console.log(imageMatches);
-				
-				var linkReg = /loadlate=["](.*?)["]/g;
-				var links = getMatches(data, linkReg, 1);
-								
-				$.each( imageMatches, function( index, value ){
-					value = value.replace(/src=["](.*?)["]/g, ' src="' + links[index] + '" ');
-					value = value.replace(/(<[^>]*)loadlate\s*=\s*('|")[^\2]*?\2([^>]*>)/g, "$1$3");
-					value = value.replace(/class=["](.*?)["]/g, ' class="resultImage" title="' + matches[index] + '"');
-					
-					$('#resultBody').append('<span class="grid-block" id="GridBlockID"><span><a target="_blank" href="http://www.imdb.com/title/' + movieIds[index] + '/?ref_=kw_li_tt">' + value + '</a></span><br><div style="height:75px; width: 140px !important; overflow:hidden;">' + matches[index] + '</div></span>');
-					
-				});
-				
-				pageNumber++;
-				$('#resultBody').append('<span id="loadMoreId" onclick="loadMore();">Load More</span>');
-			}
-			
-					
-			
-
-					
-			} 
-		});
-	}
-	
+    $('#resultBody').empty();
+	$("option:selected").removeAttr('selected');
+	$('#keywordTags').tagsinput('removeAll');
+	$("#genreSelect").multiselect('refresh');
+	$("#movieTVSelect").multiselect('refresh');
+	$('#ratingSlider').slider('setValue', [1,10]);
+	$('#keywordTags').tagsinput('focus');
 }

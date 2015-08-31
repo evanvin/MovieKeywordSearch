@@ -17,7 +17,7 @@
 </head>
 <body id="background">
 
-<div id="loadingDiv"></div>
+<div id="loadingDiv"><img src="img/load.gif"/></div>
 
 <div class="container">
 	<br><br><br><br>
@@ -80,13 +80,13 @@
 					
 					<div class="form-group">
 						<label>Rating</label><br>
-						<input id="ratingSlider" type="text" class="span2" value="" data-slider-min="1" data-slider-max="10" data-slider-step=".1" data-slider-value="[1,10]"/>
+						<input id="ratingSlider" type="text" class="span2" value="" data-slider-min="1" data-slider-max="10" data-slider-step=".1" data-slider-value="[1,10]" data-slider-handle="custom"/>
 					</div>
 					
 					<div class="form-group centered">
+						<button type="button" class="btn btn-danger btn-lg" onclick="clearForm();">Clear</button>
 						<button type="button" class="btn btn-info btn-lg" onclick="searchMovies();">Search</button>
-					</div>
-					
+					</div>					
 				</div>
 				</div>
 			  </div>
@@ -116,6 +116,11 @@
 					</div>
 				</div>
 				<div class="row">
+					<div class="col-md-12" id="numberOfResults">
+					
+					</div>
+				</div>	
+				<div class="row">
 					<div class="col-md-12" id="resultBody">
 					
 					</div>
@@ -124,41 +129,20 @@
 			</div>
 		</div>
 	</div>
+	
+	
+	
 
+		
+	
 	
 </div>
 
 
+<div class="back-to-top">Top</div>
 
 <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.min.js"/></script>
-<script type="text/javascript">
-    $(document).ready(function() {
-		$('#keywordTags').tagsinput('focus');
-		
-        $('#genreSelect').multiselect({
-			maxHeight: 150,
-			buttonWidth: '100%'
-		});
-		
-		$('#movieTVSelect').multiselect({
-			maxHeight: 150,
-			buttonWidth: '100%',
-			  onChange: function(option, checked) {
-				   var values = [];
-                    $('#movieTVSelect option').each(function() {
-                        if ($(this).val() !== option.val()) {
-                            values.push($(this).val());
-                        }
-                    });
- 
-                    $('#movieTVSelect').multiselect('deselect', values);
-            }
-		});
-		
-		$("#ratingSlider").slider({});
-    });
-</script>
-<script src="js/log.js"/></script>
+<script src="js/log.js"></script>
 
 </body>
 </html>
