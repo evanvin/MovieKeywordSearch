@@ -82,6 +82,7 @@ function loadMore() {
 }
 
 function showSearchResults(clearingIndicator){
+	$('#numberOfResults').empty();
 	
 	if(clearingIndicator == 'new search'){
 		$('#resultBody').empty();
@@ -162,7 +163,7 @@ function showSearchResults(clearingIndicator){
                 
 				
 				if (movies == null || movies <= 0) {
-					$('#resultBody').append("<span>NO RESULTS</span>");
+					//$('#resultBody').append("<span>NO RESULTS</span>");
 					$('#numberOfResults').html('<span>0 results</span><br>');
 				} else {					
 					$.each(movies, function(index, value) {
