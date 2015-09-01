@@ -16,8 +16,8 @@ $('#orderBySelect').change(function() {
 });
 
 
+
 $(document).ready(function() {
-	$('#keywordTags').tagsinput('focus');
 		
         $('#genreSelect').multiselect({
 			maxHeight: 150,
@@ -40,9 +40,16 @@ $(document).ready(function() {
             }
 		});
 		
-		$("#ratingSlider").slider({});
+		$("#ratingSlider").slider({tooltip_position:'middle'});		
 		
+		$('#keywordTags').tagsinput({
+			typeahead: {
+				name: 'keywords',
+			   source: keywordData
+			}
+		});		
 		
+		$('#keywordTags').tagsinput('focus');
 		
 		//back to top functionality
 		 var offset = 220;
@@ -65,15 +72,22 @@ $(document).ready(function() {
 function searchMovies() {
     pageNumber = 1;
     $('#resultBody').empty();
-    showSearchResults();
+	$('#loadMoreDiv').empty();
+    showSearchResults("new search");
 }
 
 function loadMore() {
     $('#loadMoreId').remove();
-    showSearchResults();
+    showSearchResults("load more");
 }
 
-function showSearchResults(){
+function showSearchResults(clearingIndicator){
+	
+	if(clearingIndicator == 'new search'){
+		$('#resultBody').empty();
+	}
+	$('#loadMoreDiv').empty();
+	
 	if ($("#keywordTags").tagsinput('items') == null || $("#keywordTags").tagsinput('items').length <= 0) {
         $("#keywordTags").closest(".form-group").find(".bootstrap-tagsinput").css('border-color', '#a94442');
         return;
@@ -118,6 +132,7 @@ function showSearchResults(){
                 //options.url = "http://cors.corsproxy.io/url=" + options.url;
             }
         });
+		
         $.ajax({
             url: url,
             success: function(data) {
@@ -159,7 +174,7 @@ function showSearchResults(){
 						if(value.synopsis.indexOf("<a href") > 0){
 							value.synopsis = value.synopsis.substring(0,value.synopsis.indexOf("<a href"));
 						}
-						var descrip = value.title + ' - ' + value.year + '&#13;' + value.genre + '&#13;' + value.runtime + ' - ' + value.certificate + '&#13;' + value.actualSynopsis;
+						var descrip = value.title + ' - ' + value.year + '&#13;' + value.genre + '&#13;' + value.runtime + ' - ' + value.certificate + '&#13;' + value.synopsis;
 						$('#resultBody').append(
 							'<span class="grid-block" id="GridBlockID"><span class="movieblock" id="' + value.title + '"><a target="_blank" href="http://www.imdb.com/title/' +
 							value.movieID + '/?ref_=kw_li_tt"><img src="' + value.image +
@@ -168,8 +183,7 @@ function showSearchResults(){
 							value.title + '</div></span>');
 					});
 					pageNumber++;
-					$('#resultBody').append(
-						'<span id="loadMoreId" onclick="loadMore();">Load More</span>');
+					$("#loadMoreDiv").append('<button type="button" class="btn btn-warning btn-lg center-block" onclick="loadMore();">Load More</button>')
 				}
 				
             }
@@ -180,6 +194,7 @@ function showSearchResults(){
 function clearForm(){
 	pageNumber = 1;
     $('#resultBody').empty();
+	$('#loadMoreDiv').empty();
 	$("option:selected").removeAttr('selected');
 	$('#keywordTags').tagsinput('removeAll');
 	$("#genreSelect").multiselect('refresh');

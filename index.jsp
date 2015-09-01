@@ -7,12 +7,15 @@
 <link rel="stylesheet" href="css/bootstrap-multiselect.css">
 <link rel="stylesheet" href="css/movie_style.css">
 
-<!--JAVASCRIPT -->
+<!-- JAVASCRIPT -->
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.3/jquery.min.js"></script>
 <script src="js/bootstrap-tagsinput.min.js"></script>
+<script src="js/typeahead.js"></script>
 <script src="js/bootstrap-multiselect.js"></script>
 <script src="js/bootstrap-slider.js"></script>
 <script src="js/cors-anywhere.js"></script>
+<script src="data/keywords.js"></script>
+
 
 </head>
 <body id="background">
@@ -33,7 +36,7 @@
 					<br>
 					
 					<div class="form-group">
-						<label>Keywords</label><input id="keywordTags" data-role="tagsinput" type="text" class="form-control" aria-describedby="basic-addon1">
+						<label>Keywords</label><input id="keywordTags" data-provide="typeahead" type="text" class="form-control" aria-describedby="basic-addon1">
 					</div>
 					<div class="form-group">
 						<label>Genre</label><br>
@@ -80,7 +83,7 @@
 					
 					<div class="form-group">
 						<label>Rating</label><br>
-						<input id="ratingSlider" type="text" class="span2" value="" data-slider-min="1" data-slider-max="10" data-slider-step=".1" data-slider-value="[1,10]" data-slider-handle="custom"/>
+						<input id="ratingSlider" type="text" class="span2" value="" tooltip_position="left" data-slider-min="1" data-slider-max="10" data-slider-step=".1" data-slider-value="[1,10]" data-slider-handle="custom"/>
 					</div>
 					
 					<div class="form-group centered">
@@ -124,7 +127,12 @@
 					<div class="col-md-12" id="resultBody">
 					
 					</div>
-				</div>				
+				</div>
+				<div class="row">
+					<div class="col-md-12" id="loadMoreDiv" class="form-control">
+					
+					</div>
+				</div>
 			  </div>
 			</div>
 		</div>
